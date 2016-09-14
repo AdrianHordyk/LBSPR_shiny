@@ -178,8 +178,8 @@ shinyServer(function(input, output, clientData, session) {
 	} else {
 	  closeAlert(session, "relLinferr")
 	}
-	
-	templen <- getLB_lens()
+	templen <- NULL
+	if (chkPars()) templen <- getLB_lens()
 	if (class(templen) != "NULL") {
 	if (!is.na(Linf) & Linf > max(templen@LMids)) {
       createAlert(session,  "linfalert2", "linf2", title = "Error",
@@ -514,7 +514,7 @@ shinyServer(function(input, output, clientData, session) {
   })
 
   getLB_lens <- reactive({
-     if (!chkFileUp()) return(NULL)
+   if (!chkFileUp()) return(NULL)
 	 if(!is.null(UpLoadMSG())) return(NULL)
      dat <- data()
      dat <- as.matrix(data())
