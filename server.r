@@ -163,6 +163,19 @@ shinyServer(function(input, output, clientData, session) {
     } else {
 	  closeAlert(session, "linf1")
 	}
+	if (!is.na(Linf) & is.null(UpLoadMSG()) & input$dataType == "freq") {
+	  Lens <- getLB_lens()
+	  print(Linf)
+	  print(max(Lens@LMids))
+	  if (Linf > max(Lens@LMids)) {
+        createAlert(session,  "linfalert3", "linf2", title = "Error",
+          content = HTML(paste0("Maximum length bin (", round(max(Lens@LMids),2), 
+		    ") must be greater than ", tags$i("L"), tags$sub(HTML("&infin;")))),
+		  append = FALSE)
+      } else {
+	    closeAlert(session, "linf2")		
+	  }	
+	}
 	if (!is.na(MK) & (MK < 0.2 | MK > 6)) {
       createAlert(session,  "mkalert", "mk1", title = "Warning",
         content = HTML(paste0("Are you sure of the ",  tags$i("M/K"), " ratio? Model may not perform well
@@ -260,18 +273,30 @@ shinyServer(function(input, output, clientData, session) {
     if(is.null(data())) return(FALSE)
 	return(TRUE)
   })
+  chkSep <- reactive({
+    if(is.null(data())) return(TRUE)
+  	lendat <- as.matrix(data())
+	ind1 <- any(grepl(";", lendat))
+	ind2 <- any(grepl(",", lendat))
+	if (ind1) return(FALSE)
+	if (ind2) return(FALSE)
+	return(TRUE)
+  })
+  
   chkText <- reactive({
   if(is.null(data())) return(FALSE)
 	if(chkFileUp() == FALSE) return(FALSE)
+    if(!chkSep()) return(TRUE)
 	if(class(data()) == "character") return(TRUE)
 	if(class(data()[1,1]) == "character") return(TRUE)
 	FALSE
   })
 
   UpLoadMSG <- reactive({
-    msg1 <- msg2 <- msg3 <- msg4 <- msg5 <- NULL
+    msg1 <- msg2 <- msg3 <- msg4 <- msg5 <- msg6 <- NULL
     if(chkFileUp() == FALSE) msg1 <- "Please upload a CSV data file"
-	if(chkFileUp() == TRUE) {
+	if(!chkSep())  msg6 <- "Check File Separator" 
+	if(chkFileUp() == TRUE & chkSep()) { 
 	  if(chkFreq() & input$dataType == "raw") {
 	    msg2 <- "It looks like you've uploaded length frequencies? Please change Data Type"
 	  }
@@ -284,8 +309,9 @@ shinyServer(function(input, output, clientData, session) {
 	  if(chkText()) {
 	    msg5 <- "Text in the data file. Do you have a header?"
 	  }
+
 	}
-	out <- c(msg1, msg2, msg3, msg4, msg5)
+	out <- c(msg1, msg2, msg3, msg4, msg5, msg6)
 	out
   })
 
@@ -297,6 +323,7 @@ shinyServer(function(input, output, clientData, session) {
 
   chkFreq <- reactive({ # Check if data appears to be length frequencies
     if(!chkFileUp()) return(NULL)
+	if(!chkSep()) return(NULL)
     lendat <- as.matrix(data())
 	if (ncol(lendat) == 1) return (FALSE)
 	fst <- lendat[,1]
@@ -307,9 +334,9 @@ shinyServer(function(input, output, clientData, session) {
 
   chkHeader <- reactive({ # Check if there appears to be a header
   if(!chkFileUp()) return(NULL)
+  if(!chkSep()) return(NULL)
 	if(input$header) return(TRUE)
-  lendat <- as.matrix(data())
-
+    lendat <- as.matrix(data())
   topRow <- lendat[1,, drop=FALSE]
 	if (class(topRow) == "character") return(TRUE)
 	if (chkFreq() & is.na(topRow[1])) return(TRUE)
@@ -329,6 +356,7 @@ shinyServer(function(input, output, clientData, session) {
 
   chkMulitYear <- reactive({ # Check if there are multiple years
     if(!chkFileUp()) return(NULL)
+    if(!chkSep()) return(NULL)
 	lendat <- as.matrix(data())
 	Ncol <- ncol(lendat)
     if(chkFreq() & Ncol > 2) return(TRUE)
@@ -515,6 +543,7 @@ shinyServer(function(input, output, clientData, session) {
 
   getLB_lens <- reactive({
    if (!chkFileUp()) return(NULL)
+   if (!chkSep()) return(NULL)
 	 if(!is.null(UpLoadMSG())) return(NULL)
      dat <- data()
      dat <- as.matrix(data())
@@ -696,7 +725,9 @@ shinyServer(function(input, output, clientData, session) {
     if (!values$DoneAssess) return("")
     if (!"table" %in% input$pTypes) return("")
 	ModelFit <- doAssess()
-	Results <- round(ModelFit@Ests,2)
+	# Results <- round(ModelFit@Ests,2)
+	Results <- matrix(c(ModelFit@SL50, ModelFit@SL95, ModelFit@FM, ModelFit@SPR),
+	  ncol=4, byrow=FALSE)
 	
 	# 95% confidence intervals #
 	CIlower <- Results[,1:4] - 1.96 * sqrt(ModelFit@Vars)
@@ -708,8 +739,8 @@ shinyServer(function(input, output, clientData, session) {
 
     # correct bounded parameters - dodgy I know!
     CIlower[CIlower[,3]<0,3] <- 0
-    CIlower[CIlower[,4]<0,4] <- 0
     CIupper[CIupper[,4]>1,4] <- 1
+    CIlower[CIlower[,4]<0,4] <- 0
 	
 	CIlower <- round(CIlower,2)
 	CIupper <- round(CIupper,2)

@@ -111,6 +111,7 @@ shinyUI(tagList(tags$head(includeScript("google-analytics.js")),
 	    bsAlert("lmalert2"),
 	    bsAlert("linfalert"),
 		bsAlert("linfalert2"),
+		bsAlert("linfalert3"),
 	    bsAlert("mkalert"),
 		bsAlert("RelLinferr"),
 		p(paste("LBSPR Version: ", packageVersion("LBSPR")))
