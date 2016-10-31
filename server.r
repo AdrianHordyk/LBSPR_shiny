@@ -777,7 +777,10 @@ shinyServer(function(input, output, clientData, session) {
 	if (any(fitLog > 0)) {
 	  DF$Note <- rep("", nrow(DF))
 	  ind <- which(names(DF) == "Note")
-	  DF[which(fitLog > 0),ind] <- "Model did not converge"
+	  DF[which(fitLog == 1),ind] <- "Model did not converge"
+	  DF[which(fitLog == 2),ind] <- "Estimated selectivity may be realistically high"
+	  DF[which(fitLog == 3),ind] <- "Estimated F/M appears be realistically high"
+	  DF[which(fitLog == 4),ind] <- "Estimated selectivity and F/M may be realistically high"
     }
 	DF
   })
