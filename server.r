@@ -536,6 +536,7 @@ shinyServer(function(input, output, clientData, session) {
     LB_pars@L95 <- as.numeric(input$L95)
     LB_pars@MK <- as.numeric(input$MK)
 	LB_pars@Species <- input$Species
+	LB_pars@L_units <- input$Lunits
 	binwidth <- input$binswidth
 	LB_pars@BinWidth <- ifelse(is.null(binwidth), 5, binwidth)
 	LB_pars

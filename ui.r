@@ -76,7 +76,6 @@ shinyUI(tagList(tags$head(includeScript("google-analytics.js")),
 		  dataTableOutput("FileTable"),
 		  p(htmlOutput("fileContents")),
 		  dataTableOutput("topdata")
-
 		)
 	  )
 	),
@@ -92,7 +91,8 @@ shinyUI(tagList(tags$head(includeScript("google-analytics.js")),
 		  h4("Asymptotic Length"),
 	      uiOutput("CurrLinf", style="padding-bottom:25px;")
 		),
-
+    radioButtons("Lunits", "Length units", 
+                 choices=c("mm", "cm", "inch"), inline=TRUE),
 		actionButton("defPars", "Reset Example Parameters", icon("gear")),
 		p(),
 	    uiOutput("HistControl"),
